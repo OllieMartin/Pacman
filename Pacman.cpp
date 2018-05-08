@@ -1225,12 +1225,12 @@ void DrawPacman(int keys)
 void scanswitch_init( void ) {
 
     // Timer 0 for switch scan interrupt:
-    TCCR0A = _BV(WGM01);
+    TCCR0A = _BV(WGM01); //CTC mode (Clear Timer on Compare)
     TCCR0B = _BV(CS01)
-    | _BV(CS00); 	 /* F_CPU / 64 */
+    | _BV(CS00); 	 /* F_CPU / 64 */ 
 
     /* 1ms for manual movement of rotary encoder: */
-    OCR0A = (uint8_t)(F_CPU / (64.0 * 1000) - 0.5);
+    OCR0A = (uint8_t)(F_CPU / (64.0 * 1000) - 1); // Count to 124 ==> 1ms
     TIMSK0 |= _BV(OCIE0A);  /* Enable timer interrupt */
     sei();
 }
