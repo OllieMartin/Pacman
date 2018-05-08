@@ -17,35 +17,14 @@
 #define CMD_ADDR  0x4000
 #define DATA_ADDR 0x4100
 
-//#define CTRL_PORT	0x4000
-//#define CTRL_DDR	DDRA
-//#define CTRL_PIN	PINA
-#define DATA_PORT	0x4100
-//#define DATA_DDR	DDRC
-//#define DATA_PIN	PINC
+#define BLC			4 // PORT B
+#define RESET		7 // PORT C
+#define WR			0 // PORT E
+#define RS			0 // PORT C
+#define RD			1 // PORT E
+#define VSYNC		1 // PORT C
+#define FMARK		6 // PORT E
 
-/*
- * ? DDR OR PIN
- * PORT
- * ? DDR OR PIN
- */
-
-//#define CS 1
-#define BLC			4 // B
-#define RESET		7 // C
-#define WR			0 // E
-#define RS			0 // C
-#define RD			1 // E
-#define VSYNC		1 // C
-#define FMARK		6 // E
-
-//#define CONTROLPORT	PORTA
-//#define DATAOUT     DATA_DDR = 0xFF; // Output
-//#define DATAIN      DATA_DDR = 0x00; // Input
-
-
-//#define CS_lo()		CTRL_PORT &= ~_BV(CS)
-//#define CS_hi()		CTRL_PORT |= _BV(CS)
 #define BLC_lo()	PORTB &= ~_BV(BLC)
 #define BLC_hi()	PORTB |= _BV(BLC)
 #define RESET_lo()	PORTC &= ~_BV(RESET)
@@ -60,8 +39,6 @@
 #define VSYNC_hi()	PORTC |= _BV(VSYNC)
 #define WRITE(x)	DATA_PORT = (x)
 
-//#define CS0		CTRL_PORT &= ~_BV(CS)
-//#define CS1		CTRL_PORT |= _BV(CS)
 #define BLC0	PORTB &= ~_BV(BLC)
 #define BLC1	PORTB |= _BV(BLC)
 #define RESET0	PORTC &= ~_BV(RESET)
@@ -82,9 +59,6 @@ void init_ports()
 	/* It will be re-enabled after a power cycle if the JTAGEN fuse is set. */
 	MCUCR |=(1<<JTD);
 	MCUCR |=(1<<JTD);
-	
-	//CTRL_DDR = 0x7F;
-	//DATA_DDR = 0xFF;
 }
 
 void delay_ms(uint16_t m)
@@ -93,5 +67,3 @@ void delay_ms(uint16_t m)
 	for(i=0; i<m; i++)
 		_delay_ms(1);
 }
-
-

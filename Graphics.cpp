@@ -15,6 +15,10 @@
 ** SOFTWARE.  
 */
 
+/*
+ * Edited by Oliver Martin for LaFortuna 08/05/2018
+ */
+
 #include <stdio.h>
 #include <string.h>
 
@@ -39,9 +43,7 @@ typedef unsigned char uchar;
 #define abs(_x) ((_x) < 0 ? -(_x) : (_x))
 #endif
 
-//#include "Utils.h"
 #include "LCD.h"
-//#include "File.h"
 #include "Graphics.h"
 
 extern const byte Verdana_font_11[] PROGMEM;
@@ -189,84 +191,7 @@ void Graphics::PutPixel(ushort x, ushort y)
     LCD::SolidFill(1);
     _ph++;
 }
-/*
-int _aacolor[32];
-void Graphics::SetAAColor(int from, int to)
-{    
-    if (from == 0 && to == 0)
-    {
-        memset(_aacolor,0,sizeof(_aacolor));
-        return;
-    }
-    for (byte i = 0; i < 16; i++)
-    {
-        int color = (15-i) | ((15-i) << 4);   // 8 bit
-        color = ((color & 0xF8) << 8)  | ((color & 0xFC) << 3) | (color >> 3);
-        _aacolor[i*2] = color;
-    }
-    for (byte i = 0; i < 16; i++)
-    {
-        _aacolor[i*2+1] = _aacolor[(15-i)*2];
-    }
-}
 
-//   12:4 fixed point
-void Graphics::AALine(int x1, int y1, int x2, int y2)
-{
-    short gradient;
-    short dx = x2-x1;
-    short dy = y2-y1;
-
-    if (abs(dx) == 0 && abs(dy) == 0)
-        return;
-        
-    if (abs(dx) < abs(dy))
-    {
-        // vertical
-		if (y1 > y2)    // switch to top to bottom
-		{
-		    int t = x1;
-		    x1 = x2;
-		    x2 = t;
-		    t = y1;
-		    y1 = y2;
-		    y2 = t;
-		    dx = -dx;
-		    dy = -dy;
-		}
-	 	gradient = (((long)dx) << 6)/dy;    // gradient of the line abs(gradient) < 1 fixed ( will overflow TODO)
-		x1 <<= 2;                   // May need more fidelity on the gradient x
-		
-		short y = (y1 + 7) >> 4;
-		x1 += (gradient*((y << 4)-y1)) >> 4;  // should not overflow
-        
-		short bottom = (y2 + 7) >> 4;
-		LCD::AAY(y,bottom,x1,gradient);
-    } else {	  
-        // horizontal
-		if (x1 > x2)    // switch to left to right
-		{
-		    int t = x1;
-		    x1 = x2;
-		    x2 = t;
-		    t = y1;
-		    y1 = y2;
-		    y2 = t;
-		    dx = -dx;
-		    dy = -dy;
-		}
-	 	gradient = (((long)dy) << 6)/dx;    // gradient of the line abs(gradient) < 1 fixed (yd will overflow TODO)
-		y1 <<= 2;                           // May need more fidelity on the gradient y
-		
-		short x = (x1 + 7) >> 4;
-		y1 += (gradient*((x << 4)-x1)) >> 4;  // should not overflow
-        
-		short right = (x2 + 7) >> 4;
-		LCD::AAX(x,right,y1,gradient);
-     }
- }
-	    
-*/
 bool cmp(const byte* d, const char* s)
 {
     while (*s)
@@ -275,172 +200,6 @@ bool cmp(const byte* d, const char* s)
     return true;
 }
 
-//  img2
-//  0 width 32
-//  4 height 32
-//  8 format 8
-//  9 reserved 8
-//  10 colors 8
-//  11 restartInterval 8
-//  12 reserved 32
-//  16 palette - restarts
-//  TODO: backing up on repeated lines
-/*
-void Graphics::DrawImage(File& f, int x, int y, int scroll, int lines)
-{
-    Img2 hdr;    
-    if (!f.Read(&hdr,sizeof(Img2)) || !cmp(hdr.sig,"img2"))
-        return;
-    
-    //  Load palette
-    byte palette[512];
-    int paletteLen = (hdr.colors*2 + 3) & ~3;
-    f.Read(palette+2,paletteLen);   // Align to 4
-    
-    int width = hdr.width;
-    if (lines == 0)
-        lines = hdr.height;
-    int maxy = min(hdr.height,lines) + y;
-    
-    //  Skip restart indexes
-    if (hdr.restartInterval)
-    {
-        int restarts = (hdr.height + hdr.restartInterval - 1)/hdr.restartInterval + 1;
-        if (scroll > 0)   // 
-        {
-            int i = min(scroll/hdr.restartInterval,restarts-1);
-            scroll -= i*hdr.restartInterval;
-            maxy -= i*hdr.restartInterval;
-            f.Skip(i*4);
-            ulong restart;
-            f.Read(&restart,4);
-            f.SetPos(restart);
-        } else
-            f.Skip(restarts*4);
-    }
-    
-    //  Skip restart intervals
-    if (maxy > 320)
-        maxy = 320;
-    LCD::SetWrap(x,y,hdr.width,maxy-y);    // TODO: clip
-    LCD::SetGRAM(x,y);
-            
-    byte format = hdr.format;
-    if (format & 0x80)
-    {
-        f.SetPos(512 + ((long)scroll)*512);
-        while (y < maxy)
-        {
-            // 512 bytes in buffer
-            int count;
-            const byte* b = f.GetBuffer(&count);
-            LCD::Pixels(width,b);
-            f.Skip(512);
-            y++;
-        }
-        return;
-    }
-    
-    //  Run length compressed
-    int left = x; // TODO YUCK
-    long lastPos = 0;
-    while (y < maxy)
-    {
-        //  Repeat line?
-        byte repeat = 1;
-        long pos = f.GetPos();
-        lastPos = pos;
-        if (f.ReadByte() == 0xFF)
-        {
-            repeat = f.ReadByte();
-            pos += 2;
-        }
-        
-        //  decode a line
-        while (repeat--)
-        {
-            y++;
-            f.SetPos(pos);  // Encoder prevents backing up to previous sector
-            x = 0;
-            while (x < width)
-            {
-                int n = f.ReadByte();
-                bool ex = (n & 0x80) != 0;
-                n &= 0x7F;
-
-                if (n > 120)
-                {
-                    if (n == 126)   // skip
-                    {
-                        x += f.ReadByte();
-                        if (x == width)
-                            LCD::SetGRAM(left,y);
-                        else
-                            LCD::SetGRAM(left+x,y-1);
-                        continue;
-                    }
-                    n = ((n-121) << 8) | f.ReadByte();
-                }
-                x += n;
-                
-                if (x > width)
-                {
-                    for (;;)
-                    {
-                    }
-                }
-                
-                int count;
-                if (ex)
-                {
-                    // explicit
-                    if (format == 8)
-                    {
-                        while (n)
-                        {
-                            const byte* b = f.GetBuffer(&count);
-                            count = min(count,n);
-                            LCD::PixelsIndexed(count,b,palette);
-                            f.Skip(count);  // Always works within buffer
-                            n -= count;
-                        }
-                    }
-                    else
-                    {
-                        while (n)
-                        {
-                            const byte* b = f.GetBuffer(&count);
-                            if (count == 1)
-                            {   
-                                int color = (f.ReadByte() << 8) | f.ReadByte();  // Wrap around
-                                LCD::Pixels(1,color);
-                            } else {
-                                count >>= 1;
-                                count = min(count,n);
-                                LCD::Pixels(count,b);
-                                f.Skip(count<<1);
-                            }
-                            n -= count;
-                        }
-                    }
-                } else {
-                //  run
-                    byte a = f.ReadByte();
-                    byte b;
-                    if (format == 8)
-                    {
-                        b = palette[a*2+1];
-                        a = palette[a*2];
-                    }
-                    else
-                        b = f.ReadByte(); 
-                    LCD::Pixels(n,a,b);
-                }
-            }
-        }
-    }
-}
-*/
 void Draw8(byte c, ushort* color)
 {
     if (c == 0 || c == 0xFF)

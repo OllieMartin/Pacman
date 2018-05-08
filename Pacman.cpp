@@ -37,7 +37,6 @@ typedef unsigned char uchar;
 #include <util/delay.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
-//#include "debug.h"
 
 extern "C"
 {
@@ -50,12 +49,8 @@ extern "C"
 #define min(_a,_b) (((_a) < (_b)) ? (_a) : (_b))
 #endif
 
-//#include "debug.h"
-
-//#include "Utils.h"
 #include "Graphics.h"
 #include "LCD.h"
-
 #include "PacmanTiles.h"
 
 extern const byte _initSprites[] PROGMEM;
@@ -1227,10 +1222,11 @@ void scanswitch_init( void ) {
     // Timer 0 for switch scan interrupt:
     TCCR0A = _BV(WGM01); //CTC mode (Clear Timer on Compare)
     TCCR0B = _BV(CS01)
-    | _BV(CS00); 	 /* F_CPU / 64 */ 
+    | _BV(CS00);	 /* F_CPU / 64 */ 
 
     /* 1ms for manual movement of rotary encoder: */
     OCR0A = (uint8_t)(F_CPU / (64.0 * 1000) - 1); // Count to 124 ==> 1ms
+
     TIMSK0 |= _BV(OCIE0A);  /* Enable timer interrupt */
     sei();
 }
@@ -1251,9 +1247,6 @@ int main()
  */
 ISR( TIMER0_COMPA_vect )
 {
-    //iob_button_isr();
-    //DrawPacman(0);
     scan_switches();
     sei();
 }
-

@@ -102,7 +102,7 @@
 
 #define write_cmd_2(cmd)				asm volatile("sts %0,%1" :: "i" (CMD_ADDR), "r" (cmd) : "memory");
 #define write_data_2(data)			asm volatile("sts %0,%1" :: "i" (DATA_ADDR), "r" (data) : "memory");
-//#define write_data16(data)			asm volatile("sts %0,%B1 \n\t sts %0,%A1" :: "i" (DATA_ADDR), "r" (data)  : "memory");
+#define write_data16_2(data)			asm volatile("sts %0,%B1 \n\t sts %0,%A1" :: "i" (DATA_ADDR), "r" (data)  : "memory");
 //#define write_cmd_data(cmd, data)	asm volatile("sts %0,%1 \n\t sts %2,%3" :: "i" (CMD_ADDR), "r" (cmd), "i" (DATA_ADDR), "r" (data)  : "memory");
 
 
@@ -124,8 +124,9 @@ __inline__ void write_data(uint8_t data)
 
 __inline__ void write_data16(uint16_t data)
 {
-	write_data(data >> 8);
-	write_data(data & 0xFF);
+	//write_data(data >> 8);
+	//write_data(data & 0xFF);
+	write_data16_2(data);
 }
 
 __inline__ void write_cmd_data(uint8_t cmd, uint8_t ndata, char* data)
@@ -140,7 +141,6 @@ __inline__ void write_cmd_data(uint8_t cmd, uint8_t ndata, char* data)
 void LCD::Init()
 {
 
-
     /* Enable extended memory interface with 10 bit addressing */
     XMCRB = _BV(XMM2) | _BV(XMM1);
     XMCRA = _BV(SRE);
@@ -154,7 +154,6 @@ void LCD::Init()
 	RS_hi();
 	WR_hi();
 	RD_hi(); 
-	//CS_lo();
 	BLC_lo();
 	VSYNC_hi();
 	write_cmd(DISPLAY_OFF);
@@ -164,7 +163,6 @@ void LCD::Init()
 	write_cmd_data(POWER_CONTROL_1,				 2, "\x26\x08");
     write_cmd_data(POWER_CONTROL_2,				 1, "\x10");
     write_cmd_data(VCOM_CONTROL_1,				 2, "\x35\x3E");
-//    write_cmd_data(MEMORY_ACCESS_CONTROL,		 1, "\x48");
     write_cmd_data(MEMORY_ACCESS_CONTROL,		 1, "\x40");
     write_cmd_data(RGB_INTERFACE_SIGNAL_CONTROL, 1, "\x4A");  // Set the DE/Hsync/Vsync/Dotclk polarity
     write_cmd_data(FRAME_CONTROL_IN_NORMAL_MODE, 2, "\x00\x1B"); // 70Hz
@@ -192,9 +190,6 @@ void LCD::Init()
 
 void LCD::SetWrap(int x, int y, int width, int height)
 {
- //   WriteLcdReg(0x44,((x + width - 1) << 8) | x);   //  Horizontal RAM start and end address
- //   WriteLcdReg(0x45,y);                            //  Vertical RAM start address
- //   WriteLcdReg(0x46,y + height-1);                 //  Vertical RAM end address
 	write_cmd(COLUMN_ADDRESS_SET);
 	write_data16(x);
 	write_data16(x + width-1);
@@ -205,17 +200,10 @@ void LCD::SetWrap(int x, int y, int width, int height)
 
 void LCD::SetGRAM(int x, int y)
 {
- //   WriteLcdReg(LCD_GRAM_HOR_AD,x);  //  GDDRAM X
- //   WriteLcdReg(LCD_GRAM_VER_AD,y);  //  GDDRAM Y
- //   WriteLcdRegAddress(LCD_RW_GRAM);
 	write_cmd(MEMORY_WRITE);
 }
 
 void LCD::HardwareScroll(int y)
 {
-/*    while (y < 0)
-        y += 320;
-    while (y >= 320)
-        y -= 320;
-    WriteLcdReg(0x41,y); */
+/* Empty */
 }
