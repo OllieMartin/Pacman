@@ -981,10 +981,11 @@ jumpout:
 			//if(iob_read(IOB_DOWN)) pacman->userIntendedDir = MLeft;
 			//if(iob_read(IOB_LEFT)) pacman->userIntendedDir = MUp;
 			//if(iob_read(IOB_RIGHT)) pacman->userIntendedDir = MDown;
+           
+            if(get_switch_press(_BV(SWE))) pacman->userIntendedDir = MRight;
+            if(get_switch_press(_BV(SWW))) pacman->userIntendedDir = MLeft;
             if(get_switch_press(_BV(SWN))) pacman->userIntendedDir = MUp;
             if(get_switch_press(_BV(SWS))) pacman->userIntendedDir = MDown;
-            if(get_switch_press(_BV(SWW))) pacman->userIntendedDir = MLeft;
-            if(get_switch_press(_BV(SWE))) pacman->userIntendedDir = MRight;
 
 			if ((x & 0x7) == 0 && (y & 0x7) == 0) {   // cell aligned
 				pacman->dir = pacman->userIntendedDir;
@@ -1002,10 +1003,12 @@ jumpout:
 		}
 
 		//-- wrap x because of tunnels
-		while (x < 0)
+		while (x < 0) {
 			x += 224;
-		while (x >= 224)
+        }
+		while (x >= 224) {
 			x -= 224;
+        }
 
 		/* =========== CODE SNIPPET 2: wall collisions ========== */
 		/**
@@ -1019,7 +1022,7 @@ jumpout:
 		//-- get the future tile, given the current direction is should be heading
 		byte tile = GetTile((rayX + 4) >> 3,(rayY + 4) >> 3);
 		//-- make sure not colliding with walls:
-		if (!(tile == 0 || tile == DOT || tile == PILL || tile == PENGATE)) {
+		if (!(tile == 0 || tile == DOT || tile == PILL || tile == PENGATE )) {
 			//-- this would be a collision, return x and y back to the last know cell aligned state
 			x = pacman->lastCellAlignedX;
 			y = pacman->lastCellAlignedY;
@@ -1221,11 +1224,11 @@ void scanswitch_init( void ) {
 
     // Timer 0 for switch scan interrupt:
     TCCR0A = _BV(WGM01); //CTC mode (Clear Timer on Compare)
-    TCCR0B = _BV(CS01)
-    | _BV(CS00);	 /* F_CPU / 64 */ 
+    TCCR0B = _BV(CS02)
+    | _BV(CS00);	 /* F_CPU / 1024 */ 
 
-    /* 1ms for manual movement of rotary encoder: */
-    OCR0A = (uint8_t)(F_CPU / (64.0 * 1000) - 1); // Count to 124 ==> 1ms
+    /* 10ms for button presses */
+    OCR0A = (uint8_t)(F_CPU / (1024 * 100) - 1); // Count to 78 ==> 10ms
 
     TIMSK0 |= _BV(OCIE0A);  /* Enable timer interrupt */
     sei();
@@ -1234,7 +1237,10 @@ void scanswitch_init( void ) {
 
 int main()
 {
-	//init_debug_uart0();
+    /* 8MHz clock, no prescaling (DS, p. 48) */
+    CLKPR = (1 << CLKPCE);
+    CLKPR = 0;
+
 	scanswitch_init();
 	iob_init();
 	LCD::Init();

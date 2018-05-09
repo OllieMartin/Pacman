@@ -1,6 +1,19 @@
 /*
  * Edited by Oliver Martin for LaFortuna 05/05/2018
+ *
+ * ( Using some code from previous tasks: ruota.c )
+ * ( See license for this code below )
  */
+
+/* ruota.c
+
+    Copyright Peter Dannegger (danni@specs.de)
+    http://www.mikrocontroller.net/articles/Entprellung 
+    http://www.mikrocontroller.net/articles/Drehgeber
+
+    Slightly adapted by Klaus-Peter Zauner for FortunaOS, March 2015
+
+*/
 
 #include <stdio.h>
 
