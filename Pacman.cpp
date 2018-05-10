@@ -228,6 +228,10 @@ public:
         cy =  pgm_read_byte(s++);
         pentimer = pgm_read_byte(s++);
         dir = pgm_read_byte(s);
+
+        // PAC-MAN ONLY
+        userIntendedDir = dir;
+
         _x = lastx = (short)cx*8-4;
         _y = lasty = (short)cy*8;
         state = PenState;
