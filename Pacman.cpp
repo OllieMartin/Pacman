@@ -17,18 +17,7 @@
 */
 
 /*
-X:1
-T:PAC-MAN THEME
-C:Trad.
-M:4/4
-L:1/16
-Q:120
-K:G
-Bb^f_e b/2fe2 cc'g=e c'/2ge2|Bb^f_e b/2f2e2 e/2=e/2=f f/2^f/2g g/2_a/2=ab2|
-*/
-
-/*
- * Edited by Oliver Martin for LaFortuna 06/05/2018
+ * Edited by Oliver Martin [OJM] for LaFortuna 06/05/2018
  */
 
 #ifndef byte
@@ -52,6 +41,7 @@ typedef unsigned char uchar;
 extern "C"
 {
 #include "iob.h"
+/* Include JPMLs music library for sounds - [OJM] */
 #include "jpml/jpml.h"
 #include "fatfs/ff.h"
 }
@@ -863,6 +853,11 @@ jumpout:
     
     byte GetSpeed(Sprite* s)
     {
+        // This first IF causes PacMan to pause as well as the ghosts when a ghost is killed - [OJM]
+        if (_state == DeadGhostState) {
+            return 0;
+        }
+
         if (s->who == PACMAN)
             return _frightenedTimer ? 90 : 80;
         if (s->state == FrightenedState)
@@ -993,6 +988,7 @@ jumpout:
 			 * is it done?
 			 */
 			//-- pacman is controlled by the IO board
+            // Updated for LaFortuna - [OJM]
             if(get_switch_press(_BV(SWE))) pacman->userIntendedDir = MRight;
             if(get_switch_press(_BV(SWW))) pacman->userIntendedDir = MLeft;
             if(get_switch_press(_BV(SWN))) pacman->userIntendedDir = MUp;
@@ -1058,7 +1054,8 @@ jumpout:
 					s->state = DeadNumberState;     // Killed a ghost
 					_frightenedCount++;
 					_state = DeadGhostState;
-					_stateTimer = 2*FPS;
+                    // _stateTimer = 2*FPS;
+					_stateTimer = 1*FPS; // Shortened by [OJM] to make more realistic to original game
 					Score((1 << _frightenedCount)*100);
 				} else if (s->state == RunState) {
 					/* =========== CODE SNIPPET 3: pac man death ========== */
@@ -1230,6 +1227,7 @@ void DrawPacman(int keys)
 
 /**
  * Initialises the timer for scanning the IO board
+ * Updated for LaFortuna - [OJM]
  */
 void scanswitch_init( void ) {
 
@@ -1245,7 +1243,7 @@ void scanswitch_init( void ) {
     sei();
 }
 
-
+// Updated for LaFortuna - [OJM]
 int main()
 {
     /* 8MHz clock, no prescaling (DS, p. 48) */
@@ -1256,6 +1254,18 @@ int main()
 	iob_init();
 	LCD::Init();
 
+    // Uses JPML music library to play "music.abc" file if it exists on the SD CARD!
+    // ABC example file for PacMan theme written by [OJM] below:
+/*
+X:1
+T:PAC-MAN THEME
+C:Trad.
+M:4/4
+L:1/16
+Q:120
+K:G
+Bb^f_e b/2fe2 cc'g=e c'/2ge2|Bb^f_e b/2f2e2 e/2=e/2=f f/2^f/2g g/2_a/2=ab2|
+*/
     if(abc_load_file("music.abc")==FR_OK){
         abc_play();
     }else{
