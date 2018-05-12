@@ -17,6 +17,17 @@
 */
 
 /*
+X:1
+T:PAC-MAN THEME
+C:Trad.
+M:4/4
+L:1/16
+Q:120
+K:G
+Bb^f_e b/2fe2 cc'g=e c'/2ge2|Bb^f_e b/2f2e2 e/2=e/2=f f/2^f/2g g/2_a/2=ab2|
+*/
+
+/*
  * Edited by Oliver Martin for LaFortuna 06/05/2018
  */
 
@@ -41,7 +52,8 @@ typedef unsigned char uchar;
 extern "C"
 {
 #include "iob.h"
-
+#include "jpml/jpml.h"
+#include "fatfs/ff.h"
 }
 
 #ifndef max
@@ -981,11 +993,6 @@ jumpout:
 			 * is it done?
 			 */
 			//-- pacman is controlled by the IO board
-			//if(iob_read(IOB_UP)) pacman->userIntendedDir = MRight;
-			//if(iob_read(IOB_DOWN)) pacman->userIntendedDir = MLeft;
-			//if(iob_read(IOB_LEFT)) pacman->userIntendedDir = MUp;
-			//if(iob_read(IOB_RIGHT)) pacman->userIntendedDir = MDown;
-           
             if(get_switch_press(_BV(SWE))) pacman->userIntendedDir = MRight;
             if(get_switch_press(_BV(SWW))) pacman->userIntendedDir = MLeft;
             if(get_switch_press(_BV(SWN))) pacman->userIntendedDir = MUp;
@@ -1248,6 +1255,13 @@ int main()
 	scanswitch_init();
 	iob_init();
 	LCD::Init();
+
+    if(abc_load_file("music.abc")==FR_OK){
+        abc_play();
+    }else{
+        // NOTHING
+    }
+
 	for(;;)
 		DrawPacman(0);
 }
